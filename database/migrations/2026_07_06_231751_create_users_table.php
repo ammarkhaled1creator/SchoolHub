@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->foreignId("role_id")->constrained("roles")->cascadeOnDelete();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('phone')->unique();
             $table->rememberToken();
+            $table->string("image")->nullable();
+
+
+
             $table->timestamps();
         });
 
@@ -47,3 +53,4 @@ return new class extends Migration
         Schema::dropIfExists('sessions');
     }
 };
+
