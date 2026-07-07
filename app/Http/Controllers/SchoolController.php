@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Resources\SchoolResource;
 use App\Models\School;
 use App\Models\Location;
 use App\Models\TuitionFees;
@@ -68,7 +69,13 @@ class SchoolController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $school=school::with(['schoolType',
+        'locations',
+        'tuition_fees',
+        'reviews.user'])
+        ->withAvg('reviews','rating')
+        ->findOrFail($id);
+        return new SchoolResource($school);
     }
 
     /**

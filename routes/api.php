@@ -7,7 +7,7 @@ use App\Http\Controllers\ReviewController;
 Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
 Route::get('/reviews/{review}', [ReviewController::class, 'show']);
 Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
-
+Route::get('/schools/{id}',[SchoolController::class,'show']);
 
 Route::middleware('auth:api')->group(function () {
     // Reviews 
