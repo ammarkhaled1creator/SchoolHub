@@ -16,4 +16,11 @@ class School extends Model
         "website",
         "image",
     ];
+
+    public function locations(){
+        return $this->hasMany(Location::class);
+    }
+    public function tuition_fees(){
+        return $this->hasMany(TuitionFees::class);
+    }
 }
