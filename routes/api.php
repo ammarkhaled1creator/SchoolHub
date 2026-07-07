@@ -7,10 +7,10 @@ use App\Http\Controllers\ReviewController;
 Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
 Route::get('/reviews/{review}', [ReviewController::class, 'show']);
 Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
-
+Route::get('/schools/filter', [SchoolController::class, 'filter']);
 
 Route::middleware('auth:api')->group(function () {
-    // Reviews 
+    // Reviews
     Route::post('/schools/{school}/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
@@ -23,4 +23,4 @@ Route::middleware('auth:api')->group(function () {
 });
 
 
-    
+
