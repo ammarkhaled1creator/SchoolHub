@@ -96,16 +96,21 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * 1 endpoint forgetPassword email (send link) ->send el reset link
+     * 2 reset password change ->change Password
+     */
     public function forgetPassword(Request $request){
         $request->validate([
             'email'=>['required','email','exists:users,email']
         ]);
 
-        $status = Password::sendResetLink($request->only('email'));
-        if ($status == Password::RESET_LINK_SENT) {
-            return response()->json(["message" => "Password reset link has been sent to your email."]);
+        //generate reset link , send via email
+        $status=Password::sendResetLink($request->only('email'));
+        if($status==Password::RESET_LINK_SENT){
+            return response()->json(["message"=>"Password reset link has been sent to your email."]);
         }
-        return response()->json(["message" => __($status)], 422);
+        return response()->json(["message"=>__($status)],422);
     }
 
     public function resetPassword(Request $request, $token, $email){
