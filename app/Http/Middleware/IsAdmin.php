@@ -14,11 +14,17 @@ class IsAdmin
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
-    {
-        $user = auth('api')->user();
-        if($user->role->name !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-        return $next($request);
+{
+
+    $user = auth('api')->user();
+
+    
+    if (!$user || $user->role->name !== "Admin") {
+        return response()->json([
+            'message' => 'Access denied. Admin rights required.'
+        ], 403); 
     }
+
+    return $next($request); 
+}
 }

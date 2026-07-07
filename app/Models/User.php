@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -55,8 +56,12 @@ class User extends Authenticatable implements JWTSubject
             'password' => 'hashed',
         ];
     }
-        public function role()
+    public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+       return $this->belongsTo(Role::class);
     }
+    public function reviews()
+{
+    return $this->hasMany(Review::class);
+}
 }
