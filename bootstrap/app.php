@@ -12,8 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
-    })
+    $middleware->alias([
+        'isAdmin' => \App\Http\Middleware\IsAdmin::class,
+    ]);
+})
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+         $exceptions->render(function (\Throwable $e, Request $request) {
+            $status = $e->getCode() ?: 500;
+            return response()->json(['message' => $e->getMessage()], $status);
+        });
     })->create();
