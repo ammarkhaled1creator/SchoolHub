@@ -9,6 +9,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class AuthController extends Controller
 {
@@ -104,6 +105,10 @@ class AuthController extends Controller
         $request->validate([
             'email'=>['required','email','exists:users,email']
         ]);
+
+        ResetPassword::createUrlUsing(function ($user, string $token) {
+            return 'http://127.0.0.1:8000/api/auth/reset-password/' . $token . '/' . $user->email;
+        });
 
         //generate reset link , send via email
         $status=Password::sendResetLink($request->only('email'));
