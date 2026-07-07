@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ReviewController;
 
-// Public routes
 Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
 Route::get('/reviews/{review}', [ReviewController::class, 'show']);
 
@@ -37,6 +36,5 @@ Route::middleware('auth:api')->group(function () {
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/forgot-password', [AuthController::class, 'forgetPassword']);
-    Route::post('/reset-password/{token}/{email}', [AuthController::class, 'resetPassword']);
+    Route::post('/reset-password/{token}/{email}', [AuthController::class, 'resetPassword'])->name('password.reset');
 });
-
