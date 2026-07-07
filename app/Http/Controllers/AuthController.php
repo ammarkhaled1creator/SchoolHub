@@ -96,6 +96,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * 1 endpoint forgetPassword email (send link) ->send el reset link
+     * 2 reset password change ->change Password
+     */
     public function forgetPassword(Request $request){
         $request->validate([
             'email'=>['required','email','exists:users,email']
