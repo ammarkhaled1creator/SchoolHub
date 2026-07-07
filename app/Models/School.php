@@ -23,4 +23,8 @@ class School extends Model
     public function tuition_fees(){
         return $this->hasMany(TuitionFees::class);
     }
+    public function reviews()
+   {
+    return $this->hasMany(Review::class);
+    }
 }

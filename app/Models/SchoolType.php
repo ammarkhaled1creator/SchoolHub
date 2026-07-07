@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class SchoolType extends Model
 {
-    use HasFactory;
-    protected $fillable=[
-        "name",
+    protected $fillable = ['name'];
 
-
-
-    ];
-
+    public function schools()
+    {
+        return $this->hasMany(School::class);
+    }
 }
+
