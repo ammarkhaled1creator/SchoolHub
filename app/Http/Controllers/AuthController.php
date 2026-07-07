@@ -61,7 +61,7 @@ class AuthController extends Controller
             'role_id' => ['nullable', 'exists:roles,id'],
         ]);
 
-        $defaultRole = Role::firstOrCreate(['name' => 'user']);
+        $defaultRole = Role::firstOrCreate(['name' => 'User']);
 
         $user = User::create([
             'name' => $request['name'],
@@ -72,12 +72,13 @@ class AuthController extends Controller
         ]);
 
         $token = JWTAuth::fromUser($user);
+        $expiry = JWTAuth::factory()->getTTL() * 60;
 
         return response()->json([
-            'success' => true,
-            'message' => 'User registered successfully',
-            'access token' => $token,
-            'token type' => 'bearer',
+            'message' => 'User registered successfully.',
+            'token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => $expiry
         ], 201);
     }
 
@@ -89,12 +90,13 @@ class AuthController extends Controller
         $request->validate([
             'email'=>['required','email','exists:users,email']
         ]);
+
         //generate reset link , send via email
         $status=Password::sendResetLink($request->only('email'));
         if($status==Password::RESET_LINK_SENT){
-            return response()->json(["message"=>$status]);
+            return response()->json(["message"=>"Password reset link has been sent to your email."]);
         }
-        return response()->json(["message"=>$status],422);
+        return response()->json(["message"=>__($status)],422);
     }
 
     public function resetPassword(Request $request, $token, $email){
@@ -119,7 +121,7 @@ class AuthController extends Controller
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            return response()->json(["message" => __($status)]);
+            return response()->json(["message" => "Password has been reset successfully."]);
         }
 
         return response()->json(["message" => __($status)], 422);
