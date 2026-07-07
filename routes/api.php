@@ -9,7 +9,7 @@ use App\Http\Controllers\ReviewController;
 // Public routes
 Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
 Route::get('/reviews/{review}', [ReviewController::class, 'show']);
-
+Route::get('/schools/filter', [SchoolController::class, 'filter']);
 Route::get('/school-types', [SchoolTypeController::class, 'index']);
 Route::get('/school-types/{schoolType}', [SchoolTypeController::class, 'show']);
 

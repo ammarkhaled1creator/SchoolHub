@@ -62,7 +62,7 @@ class AuthController extends Controller
             'token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => $expiry
-        ]); 
+        ]);
     }
 
     public function logout(){
@@ -75,7 +75,7 @@ class AuthController extends Controller
 
     public function me(){
         $user = JWTAuth::user();
-        
+
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
@@ -88,7 +88,7 @@ class AuthController extends Controller
     public function refresh(){
         $token = JWTAuth::parseToken()->refresh();
         $expiry = JWTAuth::factory()->getTTL() * 60;
-        
+
         return response()->json([
             'token' => $token,
             'token_type' => 'Bearer',
