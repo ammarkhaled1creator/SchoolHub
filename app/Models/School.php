@@ -16,4 +16,9 @@ class School extends Model
         "website",
         "image",
     ];
+
+    public function reviews()
+   {
+    return $this->hasMany(Review::class);
+    }
 }
