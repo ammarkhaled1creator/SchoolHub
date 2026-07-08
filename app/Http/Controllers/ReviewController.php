@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReviewResource;
 use App\Models\Review;
@@ -9,25 +10,33 @@ use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ReviewController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-   public function index(School $school)
+public function index(School $school)
 {
-    return ReviewResource::collection(
-        $school->reviews()->with('user')->latest()->get()
+    $reviews = Cache::remember(
+        "school_reviews_{$school->id}",
+        now()->addHour(),
+        function () use ($school) {
+            return $school->reviews()
+                ->with('user')
+                ->latest()
+                ->get();
+        }
     );
+
+    return ReviewResource::collection($reviews);
 }
 
     /**
      * Store a newly created resource in storage.
      */
    
-
-     
 public function store(Request $request, School $school)
 {
     $validated = $request->validate([
@@ -49,6 +58,8 @@ public function store(Request $request, School $school)
     ]);
 
     $review->load('user', 'school');
+
+    Cache::flush();
 
     return response()->json([
         'message' => 'Review created successfully.',
@@ -84,9 +95,11 @@ public function update(Request $request, Review $review)
 
     $review->update($validated);
 
+    Cache::flush();
+
     return response()->json([
         'message' => 'Review updated successfully.',
-        'data' => $review,
+        'data' => new ReviewResource($review),
     ], 200);
 }
 
@@ -102,6 +115,8 @@ public function destroy(Review $review)
     }
 
     $review->delete();
+
+    Cache::flush();
 
     return response()->json([
         'message' => 'Review deleted successfully.'
