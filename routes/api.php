@@ -36,7 +36,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
 
     // Admin only
-    Route::middleware('isAdmin')->group(function () {
+    // Route::middleware('isAdmin')->group(function () {
     Route::middleware('admin')->group(function () {
         // Schools
         Route::post('/schools', [SchoolController::class, 'store']);
@@ -69,5 +69,4 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::post('/school-types', [SchoolTypeController::class, 'store']);
     Route::put('/school-types/{schoolType}', [SchoolTypeController::class, 'update']);
     Route::delete('/school-types/{schoolType}', [SchoolTypeController::class, 'destroy']);
-});
 });
