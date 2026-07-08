@@ -86,5 +86,6 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/school-types/{schoolType}', [SchoolTypeController::class, 'destroy']);
 
         Route::get('/users', [AuthController::class, 'getAllUsers']);
+        Route::delete('/users/{id}',[UserController::class,'destroy']);
     });
 });

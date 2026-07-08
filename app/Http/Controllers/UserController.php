@@ -19,6 +19,14 @@ class UserController extends Controller
             'data'=>$allusers
         ],200);
     }
+    public function destroy(string $id){
+        $user=User::findOrFail($id);
+        $user->delete();
+        Cache::forget("AllUsers_page");
+        return response()->json([
+            'message'=>'user deleted successfully.'
+        ],200);
+    }
 
     
 }
