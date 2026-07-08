@@ -9,175 +9,19 @@ use App\Models\Location;
 use App\Models\SchoolType;
 use App\Models\TuitionFees;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 class SchoolController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        //
-    }
+    public function index(Request $request)
+{
+    $perPage = (int) $request->input('per_page', 10);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //1-Make sure that request is fully sent
-        $valid = $request -> validate([
-    'name'=>'required|string|max:225',
-    'description'=>'required|string',
-    'phone'=>'required|string',
-    'website'=>'required|url',
-    'school_type_id'=>'required|exists:school_types,id',
-    'image'=>'image|mimes:jpeg,png',
+    $cacheKey = 'schools_' . md5(json_encode($request->query()));
 
-    //Locations:
-    'locations'=>'required|array|min:1',
-    'locations.*.city'=>'required|string',
-    'locations.*.address'=>'required|string',
-    'locations.*.google_maps_link'=>'required|url',
-
-    //tuition_fees
-    'tuition_fees'=>'required|array|min:1',
-    'tuition_fees.*.grade'=>'required|string',
-    'tuition_fees.*.price'=>'required|numeric ',
-    'tuition_fees.*.academic_year'=>'required|string',
-    ]);
-
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('schools', 'public');
-        $valid['image'] = $imagePath; 
-    }
-
-    //confirm Creation:
-    $school= School::create([
-    'name'=>$valid['name'],
-    'description'=>$valid['description'],
-    'phone'=>$valid['phone'],
-    'website'=>$valid['website'],
-    'school_type_id'=>$valid['school_type_id'],
-    'image'=>$valid['image']
-    ]);
-
-    //insert locations, fees into their tables:
-    $school->locations()->createMany($valid['locations']);
-    $school->tuition_fees()->createMany($valid['tuition_fees']);
-
-    //Return Response:
-    return response() ->json([
-        'message' => 'School Created Successfully !',
-        'data'=> $valid ],
-          201);
-
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    // return a single school with all related data
-    public function show(string $id)
-    {
-        $school=school::with(['schoolType',
-        'locations',
-        'tuition_fees',
-        'reviews.user'])
-        ->withAvg('reviews','rating')
-        ->findOrFail($id);
-        return new DetailsResource($school);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-    
-    $school=School::findOrFail($id);
-
-
-    if ($request->has('locations')) {
-        $locations = $request->input('locations');
-        if (!is_array($locations) || empty(array_filter($locations[0] ?? []))) {
-            $request->request->remove('locations');
-        }
-    }
-    if ($request->has('tuition_fees')) {
-        $fees = $request->input('tuition_fees');
-        if (!is_array($fees) || empty(array_filter($fees[0] ?? []))) {
-            $request->request->remove('tuition_fees');
-        }
-    }
-
-    $valid = $request -> validate([
-    'name'=>'sometimes|nullable|string|max:225',
-    'description'=>'sometimes|nullable|string',
-    'phone'=>'sometimes|nullable|string',
-    'school_type_id'=>'sometimes|nullable|exists:school_types,id',
-    'website'=>'sometimes|nullable|url',
-    'image'=>'sometimes|nullable|image|mimes:jpeg,png',
-
-   
-    'locations'=>'sometimes|nullable|array',
-    'locations.*.city'=>'required_with:locations|string',
-    'locations.*.address'=>'required_with:locations|string',
-    'locations.*.google_maps_link'=>'required_with:locations|url',
-
-    
-    'tuition_fees'=>'sometimes|nullable|array',
-    'tuition_fees.*.grade'=>'required_with:tuition_fees|string',
-    'tuition_fees.*.price'=>'required_with:tuition_fees|numeric',
-    'tuition_fees.*.academic_year'=>'required_with:tuition_fees|string',
-    ]);
-    
-    $filteredData = array_filter($valid, function ($value) {
-        return $value !== null && $value !== '';
-    });
-
-
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('schools', 'public');
-        $filteredData['image'] = $imagePath;
-    } else {
-        unset($filteredData['image']);
-    }
-
-
-    $school->update($filteredData);
-    if($request->has('locations') && is_array($request->locations) && count($request->locations) > 0){
-    $school->locations()->delete();
-    $school->locations()->createMany($valid['locations']);}
-
-   
-   if($request->has('tuition_fees') && is_array($request->tuition_fees) && count($request->tuition_fees) > 0){
-    $school->tuition_fees()->delete();
-    $school->tuition_fees()->createMany($valid['tuition_fees']);}
-
-    
-    return response() ->json([
-        'message' => 'School Updated Successfully !',
-         'data'=> $school->load(['locations','tuition_fees']) ],
-          200);
-
-    }
-
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //1.look for school
-        $school=School::findOrFail($id);
-        $school->delete();
-        return response(null,204);
-
-    }
-    public function filter(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $perPage = (int) $request->input('per_page', 10);
+    $schools = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($request, $perPage) {
 
         $query = School::query()
             ->withAvg('reviews', 'rating')
@@ -199,59 +43,239 @@ class SchoolController extends Controller
             });
         }
 
-
-
         if ($request->filled('locations')) {
             $location = $request->locations;
 
             $query->whereHas('locations', function ($q) use ($location) {
                 $q->where('city', 'like', '%' . $location . '%');
             });
-
         }
-        $schools = $query->paginate($perPage)->appends($request->query());
-        return response()->json([
-            'data' => SchoolResource::collection($schools->items()),
-            'links' => [
-                'first' => $schools->url(1),
-                'last' => $schools->url($schools->lastPage()),
-                'prev' => $schools->previousPageUrl(),
-                'next' => $schools->nextPageUrl(),
-            ],
-            'meta' => [
-                'current_page' => $schools->currentPage(),
-                'last_page' => $schools->lastPage(),
-                'per_page' => $schools->perPage(),
-                'total' => $schools->total(),
-            ],
-        ]);
+
+        return $query->paginate($perPage)->appends($request->query());
+    });
+
+    return response()->json([
+        'data' => SchoolResource::collection($schools->items()),
+        'links' => [
+            'first' => $schools->url(1),
+            'last' => $schools->url($schools->lastPage()),
+            'prev' => $schools->previousPageUrl(),
+            'next' => $schools->nextPageUrl(),
+        ],
+        'meta' => [
+            'current_page' => $schools->currentPage(),
+            'last_page' => $schools->lastPage(),
+            'per_page' => $schools->perPage(),
+            'total' => $schools->total(),
+        ],
+    ]);
+}
+
+    /**
+     * Store a newly created resource in storage.
+     */
+   public function store(Request $request)
+{
+    $valid = $request->validate([
+        'name' => 'required|string|max:225',
+        'description' => 'required|string',
+        'phone' => 'required|string',
+        'website' => 'required|url',
+        'school_type_id' => 'required|exists:school_types,id',
+        'image' => 'image|mimes:jpeg,png',
+
+        // Locations
+        'locations' => 'required|array|min:1',
+        'locations.*.city' => 'required|string',
+        'locations.*.address' => 'required|string',
+        'locations.*.google_maps_link' => 'required|url',
+
+        // Tuition Fees
+        'tuition_fees' => 'required|array|min:1',
+        'tuition_fees.*.grade' => 'required|string',
+        'tuition_fees.*.price' => 'required|numeric',
+        'tuition_fees.*.academic_year' => 'required|string',
+    ]);
+
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $valid['image'] = $imagePath;
     }
+
+    $school = School::create([
+        'name' => $valid['name'],
+        'description' => $valid['description'],
+        'phone' => $valid['phone'],
+        'website' => $valid['website'],
+        'school_type_id' => $valid['school_type_id'],
+        'image' => $valid['image'] ?? null,
+    ]);
+
+    $school->locations()->createMany($valid['locations']);
+    $school->tuition_fees()->createMany($valid['tuition_fees']);
+
+    // Clear cache
+    Cache::flush();
+
+    return response()->json([
+        'message' => 'School Created Successfully!',
+        'data' => $school->load(['schoolType', 'locations', 'tuition_fees']),
+    ], 201);
+}
+    /**
+     * Display the specified resource.
+     */
+    // return a single school with all related data
+  public function show(string $id)
+{
+    $school = Cache::remember(
+        "school_{$id}",
+        now()->addHour(),
+        function () use ($id) {
+            return School::with([
+                    'schoolType',
+                    'locations',
+                    'tuition_fees',
+                    'reviews.user',
+                ])
+                ->withAvg('reviews', 'rating')
+                ->findOrFail($id);
+        }
+    );
+
+    return new DetailsResource($school);
+}
+
+    /**
+     * Update the specified resource in storage.
+     */
+   public function update(Request $request, string $id)
+{
+    $school = School::findOrFail($id);
+
+    if ($request->has('locations')) {
+        $locations = $request->input('locations');
+        if (!is_array($locations) || empty(array_filter($locations[0] ?? []))) {
+            $request->request->remove('locations');
+        }
+    }
+
+    if ($request->has('tuition_fees')) {
+        $fees = $request->input('tuition_fees');
+        if (!is_array($fees) || empty(array_filter($fees[0] ?? []))) {
+            $request->request->remove('tuition_fees');
+        }
+    }
+
+    $valid = $request->validate([
+        'name' => 'sometimes|nullable|string|max:225',
+        'description' => 'sometimes|nullable|string',
+        'phone' => 'sometimes|nullable|string',
+        'school_type_id' => 'sometimes|nullable|exists:school_types,id',
+        'website' => 'sometimes|nullable|url',
+        'image' => 'sometimes|nullable|image|mimes:jpeg,png',
+
+        'locations' => 'sometimes|nullable|array',
+        'locations.*.city' => 'required_with:locations|string',
+        'locations.*.address' => 'required_with:locations|string',
+        'locations.*.google_maps_link' => 'required_with:locations|url',
+
+        'tuition_fees' => 'sometimes|nullable|array',
+        'tuition_fees.*.grade' => 'required_with:tuition_fees|string',
+        'tuition_fees.*.price' => 'required_with:tuition_fees|numeric',
+        'tuition_fees.*.academic_year' => 'required_with:tuition_fees|string',
+    ]);
+
+    $filteredData = array_filter($valid, function ($value) {
+        return $value !== null && $value !== '';
+    });
+
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $filteredData['image'] = $imagePath;
+    } else {
+        unset($filteredData['image']);
+    }
+
+    $school->update($filteredData);
+
+    if ($request->has('locations') && is_array($request->locations) && count($request->locations) > 0) {
+        $school->locations()->delete();
+        $school->locations()->createMany($valid['locations']);
+    }
+
+    if ($request->has('tuition_fees') && is_array($request->tuition_fees) && count($request->tuition_fees) > 0) {
+        $school->tuition_fees()->delete();
+        $school->tuition_fees()->createMany($valid['tuition_fees']);
+    }
+
+    // Clear Cache
+    Cache::forget("school_{$school->id}");
+    Cache::flush();
+
+    return response()->json([
+        'message' => 'School Updated Successfully!',
+        'data' => $school->load([
+            'schoolType',
+            'locations',
+            'tuition_fees'
+        ]),
+    ], 200);
+}
+
+
+
+    /**
+     * Remove the specified resource from storage.
+     */
+public function destroy(string $id)
+{
+    $school = School::findOrFail($id);
+
+    $school->delete();
+
+    Cache::flush();
+
+    return response()->json(null, 204);
+}
+
     // compare two schools based on thier general information
-    public function compare(Request $request){
-        $request->validate([
-            'first_school_id'=>'required|exists:schools,id',
-            'second_school_id'=>'required|exists:schools,id|different:first_school_id'
+    public function compare(Request $request)
+{
+    $request->validate([
+        'first_school_id' => 'required|exists:schools,id',
+        'second_school_id' => 'required|exists:schools,id|different:first_school_id',
+    ]);
 
-        ]);
-        $first_school=School::with([
+    $cacheKey = 'compare_' . min($request->first_school_id, $request->second_school_id)
+        . '_' .
+        max($request->first_school_id, $request->second_school_id);
+
+    $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($request) {
+
+        $firstSchool = School::with([
             'schoolType',
             'locations',
             'tuition_fees',
         ])
-        ->withAvg('reviews','rating')
+        ->withAvg('reviews', 'rating')
         ->findOrFail($request->first_school_id);
-        $second_school=School::with([
+
+        $secondSchool = School::with([
             'schoolType',
             'locations',
             'tuition_fees',
         ])
-        ->withAvg('reviews','rating')
+        ->withAvg('reviews', 'rating')
         ->findOrFail($request->second_school_id);
-        return response()->json([
-            'first_school'=>new CompareResource($first_school),
-            'second_school'=>new CompareResource($second_school),
-        ],200);
 
-    }
+        return [
+            'first_school' => new CompareResource($firstSchool),
+            'second_school' => new CompareResource($secondSchool),
+        ];
+    });
+
+    return response()->json($data, 200);
+}
 
 }
