@@ -28,6 +28,7 @@ class SchoolController extends Controller
     'description'=>'required|string',
     'phone'=>'required|string',
     'website'=>'required|url',
+    'school_type_id'=>'required|exists:school_types,id',
     'image'=>'image|mimes:jpeg,png',
 
     //Locations:
@@ -43,12 +44,18 @@ class SchoolController extends Controller
     'tuition_fees.*.academic_year'=>'required|string',
     ]);
 
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $valid['image'] = $imagePath; 
+    }
+
     //confirm Creation:
     $school= School::create([
     'name'=>$valid['name'],
     'description'=>$valid['description'],
     'phone'=>$valid['phone'],
     'website'=>$valid['website'],
+    'school_type_id'=>$valid['school_type_id'],
     'image'=>$valid['image']
     ]);
 
@@ -84,6 +91,7 @@ class SchoolController extends Controller
     'name'=>'sometimes|string|max:225',
     'description'=>'sometimes|string',
     'phone'=>'sometimes|string',
+    'school_type_id'=>'sometimes|exists:school_type_id',
     'website'=>'sometimes|url',
     'image'=>'image|mimes:jpeg,png',
 
@@ -100,11 +108,13 @@ class SchoolController extends Controller
     'tuition_fees.*.academic_year'=>'required_with:tuition_fees|string',
     ]);
 
-
-
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $valid['image'] = $imagePath;
+    }
 
     //confirm Updation for school table:
-    $school->update($request->only(['name','description','phone','website','image']));
+    $school->update($valid);
 
     //delete old data and insert all the new only if the sent request has location data:
     if($request->has('locations')){

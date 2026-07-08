@@ -31,7 +31,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
 
     // Admin only
-    Route::middleware('isAdmin')->group(function () {
+    Route::middleware('admin')->group(function () {
         // Schools
         Route::post('/schools', [SchoolController::class, 'store']);
         Route::put('/schools/{id}', [SchoolController::class, 'update']);
