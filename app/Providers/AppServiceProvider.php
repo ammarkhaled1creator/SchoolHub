@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,5 +25,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define("IsUser", function (User $user) {
             return $user->role->name=="User";
         });
+        ResetPassword::createUrlUsing(function (object $user, string $token) {
+            return config("app.frontend_url") . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
+});
 }
 }

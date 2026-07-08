@@ -9,6 +9,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 
 class AuthController extends Controller
@@ -19,7 +20,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-            $credentials = $request->only('email', 'password');
+        $credentials = $request->only('email', 'password');
         if (! $token = auth('api')->attempt($credentials)) {
             return response()->json([
             'message' => 'Invalid email or password',
@@ -27,7 +28,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-        'message' => 'Logged in successfully',
+        'message' => 'Login successful',
         'token' => $token,
         'token_type' => 'Bearer',
         'expires_in' => JWTAuth::factory()->getTTL() * 60
@@ -99,6 +100,10 @@ class AuthController extends Controller
             'email'=>['required','email','exists:users,email']
         ]);
 
+        ResetPassword::createUrlUsing(function ($user, string $token) {
+            return 'http://127.0.0.1:8000/api/auth/reset-password/' . $token . '/' . $user->email;
+        });
+
         $status = Password::sendResetLink($request->only('email'));
         if ($status == Password::RESET_LINK_SENT) {
             return response()->json(["message" => "Password reset link has been sent to your email."]);
@@ -134,4 +139,6 @@ class AuthController extends Controller
 
         return response()->json(["message" => __($status)], 422);
     }
+
+    
 }
