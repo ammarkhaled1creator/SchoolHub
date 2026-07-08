@@ -19,16 +19,20 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-             $credentials = $request->only('email', 'password');
-                $token = auth('api')->attempt($credentials);
-            if(!$token) {
-                return response()->json(['message'=>"Invalid email or password"], 401);
-            }
+            $credentials = $request->only('email', 'password');
+        if (! $token = auth('api')->attempt($credentials)) {
             return response()->json([
-                'message'=>"Logged in successfully",
-                'token'=>$token
-            ]);
+            'message' => 'Invalid email or password',
+            ], 401);
         }
+
+        return response()->json([
+        'message' => 'Logged in successfully',
+        'token' => $token,
+        'token_type' => 'Bearer',
+        'expires_in' => JWTAuth::factory()->getTTL() * 60
+    ]);
+    }
     public function me()
         {
             $user=auth('api')->user();
