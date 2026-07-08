@@ -82,6 +82,60 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function login(Request $request){
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $credentials = $request->only('email', 'password');
+        $token = JWTAuth::attempt($credentials);
+        if(!$token){
+            return response()->json([
+                'message' => 'Invalid email or password',
+            ], 401);
+        }
+        $expiry = JWTAuth::factory()->getTTL() * 60;
+
+        return response()->json([
+            'message' => 'Login successful.',
+            'token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => $expiry
+        ]); 
+    }
+
+    public function logout(){
+        JWTAuth::invalidate(JWTAuth::getToken());
+
+        return response()->json([
+            'message' => 'Logged out successfully.'
+        ]);
+    }
+
+    public function me(){
+        $user = JWTAuth::user();
+        
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role ? $user->role->name : 'User'
+        ]);
+    }
+
+    public function refresh(){
+        $token = JWTAuth::parseToken()->refresh();
+        $expiry = JWTAuth::factory()->getTTL() * 60;
+        
+        return response()->json([
+            'token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => $expiry
+        ]);
+    }
+
     /**
      * 1 endpoint forgetPassword email (send link) ->send el reset link
      * 2 reset password change ->change Password
@@ -91,12 +145,12 @@ class AuthController extends Controller
             'email'=>['required','email','exists:users,email']
         ]);
 
-        //generate reset link , send via email
-        $status=Password::sendResetLink($request->only('email'));
-        if($status==Password::RESET_LINK_SENT){
-            return response()->json(["message"=>"Password reset link has been sent to your email."]);
+        $status = Password::sendResetLink($request->only('email'));
+        if ($status == Password::RESET_LINK_SENT) {
+            return response()->json(["message" => "Password reset link has been sent to your email."]);
         }
-        return response()->json(["message"=>__($status)],422);
+
+        return response()->json(["message" => __($status)], 422);
     }
 
     public function resetPassword(Request $request, $token, $email){
