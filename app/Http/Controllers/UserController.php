@@ -48,18 +48,24 @@ class UserController extends Controller
         return response()->json(['message' => 'Password changed successfully.']);
     }
 
-    public function getallusers()
-    {
-        //default number for the page is one, but if user enters any number it will be accepted
-        $page=request('page',1);
-        $allusers=Cache::remember("AllUsers_page",3600,function(){
-            return User::Paginate(10);
-    });
-        return response()->json([
-            'message'=>'All users',
-            'data'=>$allusers
-        ],200);
-    }
+public function getAllUsers(Request $request)
+{
+    $page = $request->input('page', 1);
+
+    $allUsers = Cache::remember(
+        "all_users_page_{$page}",
+        now()->addHour(),
+        function () {
+            return User::paginate(10);
+        }
+    );
+
+    return response()->json([
+        'message' => 'All users retrieved successfully.',
+        'data' => $allUsers,
+    ], 200);
+}
+  
     public function destroy(string $id){
         $user=User::findOrFail($id);
         $user->delete();
@@ -68,6 +74,17 @@ class UserController extends Controller
             'message'=>'user deleted successfully.'
         ],200);
     }
+    public function show(string $id)
+   {
+    $user = User::findOrFail($id);
+
+    return response()->json([
+        'message' => 'User retrieved successfully.',
+        'data' => $user,
+    ], 200);
+   }
+
+
 
     
 }

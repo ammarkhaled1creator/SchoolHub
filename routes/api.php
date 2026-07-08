@@ -91,6 +91,7 @@ Route::middleware('auth:api')->group(function () {
         
         //Users 
         Route::get('/users', [UserController::class, 'getAllUsers']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
         Route::delete('/users/{id}',[UserController::class,'destroy']);
     });
 });
