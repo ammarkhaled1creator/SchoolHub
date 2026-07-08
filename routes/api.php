@@ -4,18 +4,14 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\UserController;
 
 
 Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
-Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:api')->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-});
 
 // Public routes
+Route::post('/login', [AuthController::class, 'login']);
 Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
 Route::get('/reviews/{review}', [ReviewController::class, 'show']);
 Route::get('/schools/filter', [SchoolController::class, 'filter']);
@@ -30,6 +26,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/schools/{school}/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::put('/profile', [UserController::class, 'updateProfile']);
+    Route::put('/profile/password', [UserController::class, 'changePassword']);
 
 
     // Schools -- for admin only
