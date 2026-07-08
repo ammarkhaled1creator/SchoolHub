@@ -22,10 +22,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'mariam',
+            'email' => 'mariam@gmail.com',
+            'password'=> bcrypt('Pass123'),
             'phone' => '01011111111',
-            'role_id' => \App\Models\Role::firstOrCreate(['name' => 'admin'])->id,
+            'role_id' => \App\Models\Role::firstOrCreate(['name' => 'Admin'])->id,
         ]);
 
         User::factory(10)->create();
