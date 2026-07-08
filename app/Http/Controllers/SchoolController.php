@@ -96,36 +96,55 @@ class SchoolController extends Controller
     
     $school=School::findOrFail($id);
 
+
+    if ($request->has('locations')) {
+        $locations = $request->input('locations');
+        if (!is_array($locations) || empty(array_filter($locations[0] ?? []))) {
+            $request->request->remove('locations');
+        }
+    }
+    if ($request->has('tuition_fees')) {
+        $fees = $request->input('tuition_fees');
+        if (!is_array($fees) || empty(array_filter($fees[0] ?? []))) {
+            $request->request->remove('tuition_fees');
+        }
+    }
+
     $valid = $request -> validate([
-    'name'=>'sometimes|string|max:225',
-    'description'=>'sometimes|string',
-    'phone'=>'sometimes|string',
-    'school_type_id'=>'sometimes|exists:school_types,id',
-    'website'=>'sometimes|url',
-    'image'=>'image|mimes:jpeg,png',
+    'name'=>'sometimes|nullable|string|max:225',
+    'description'=>'sometimes|nullable|string',
+    'phone'=>'sometimes|nullable|string',
+    'school_type_id'=>'sometimes|nullable|exists:school_types,id',
+    'website'=>'sometimes|nullable|url',
+    'image'=>'sometimes|nullable|image|mimes:jpeg,png',
 
    
-    'locations'=>'sometimes|array',
+    'locations'=>'sometimes|nullable|array',
     'locations.*.city'=>'required_with:locations|string',
     'locations.*.address'=>'required_with:locations|string',
     'locations.*.google_maps_link'=>'required_with:locations|url',
 
     
-    'tuition_fees'=>'sometimes|array',
+    'tuition_fees'=>'sometimes|nullable|array',
     'tuition_fees.*.grade'=>'required_with:tuition_fees|string',
     'tuition_fees.*.price'=>'required_with:tuition_fees|numeric',
     'tuition_fees.*.academic_year'=>'required_with:tuition_fees|string',
     ]);
+    
+    $filteredData = array_filter($valid, function ($value) {
+        return $value !== null && $value !== '';
+    });
+
 
     if ($request->hasFile('image')) {
         $imagePath = $request->file('image')->store('schools', 'public');
-        $valid['image'] = $imagePath;
+        $filteredData['image'] = $imagePath;
+    } else {
+        unset($filteredData['image']);
     }
 
 
-    $school->update($valid);
-
-    
+    $school->update($filteredData);
     if($request->has('locations') && is_array($request->locations) && count($request->locations) > 0){
     $school->locations()->delete();
     $school->locations()->createMany($valid['locations']);}
