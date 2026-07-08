@@ -67,6 +67,10 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 
+    // User
+    Route::put('/profile', [UserController::class, 'updateProfile']);
+    Route::put('/profile/password', [UserController::class, 'changePassword']);
+
     /*
     |--------------------------------------------------------------------------
     | Admin Routes
@@ -84,8 +88,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/school-types', [SchoolTypeController::class, 'store']);
         Route::put('/school-types/{schoolType}', [SchoolTypeController::class, 'update']);
         Route::delete('/school-types/{schoolType}', [SchoolTypeController::class, 'destroy']);
-
-        Route::get('/users', [AuthController::class, 'getAllUsers']);
+        
+        //Users 
+        Route::get('/users', [UserController::class, 'getAllUsers']);
         Route::delete('/users/{id}',[UserController::class,'destroy']);
     });
 });
