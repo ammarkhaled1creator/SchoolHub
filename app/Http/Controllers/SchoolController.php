@@ -84,27 +84,27 @@ class SchoolController extends Controller
      */
     public function update(Request $request, string $id)
     {
-    //Look for school Id if it exists or not?
+    
     $school=School::findOrFail($id);
 
     $valid = $request -> validate([
     'name'=>'sometimes|string|max:225',
     'description'=>'sometimes|string',
     'phone'=>'sometimes|string',
-    'school_type_id'=>'sometimes|exists:school_type_id',
+    'school_type_id'=>'sometimes|exists:school_types,id',
     'website'=>'sometimes|url',
     'image'=>'image|mimes:jpeg,png',
 
-    //Locations:
-    'locations'=>'sometimes|array|min:1',
+   
+    'locations'=>'sometimes|array',
     'locations.*.city'=>'required_with:locations|string',
     'locations.*.address'=>'required_with:locations|string',
     'locations.*.google_maps_link'=>'required_with:locations|url',
 
-    //tuition_fees
-    'tuition_fees'=>'sometimes|array|min:1',
+    
+    'tuition_fees'=>'sometimes|array',
     'tuition_fees.*.grade'=>'required_with:tuition_fees|string',
-    'tuition_fees.*.price'=>'required_with:tuition_fees|numeric ',
+    'tuition_fees.*.price'=>'required_with:tuition_fees|numeric',
     'tuition_fees.*.academic_year'=>'required_with:tuition_fees|string',
     ]);
 
@@ -113,20 +113,20 @@ class SchoolController extends Controller
         $valid['image'] = $imagePath;
     }
 
-    //confirm Updation for school table:
+
     $school->update($valid);
 
-    //delete old data and insert all the new only if the sent request has location data:
-    if($request->has('locations')){
+    
+    if($request->has('locations') && is_array($request->locations) && count($request->locations) > 0){
     $school->locations()->delete();
     $school->locations()->createMany($valid['locations']);}
 
-   //tuition_fees same as location
-   if($request->has('tuition_fees')){
+   
+   if($request->has('tuition_fees') && is_array($request->tuition_fees) && count($request->tuition_fees) > 0){
     $school->tuition_fees()->delete();
     $school->tuition_fees()->createMany($valid['tuition_fees']);}
 
-    //Return Response:
+    
     return response() ->json([
         'message' => 'School Updated Successfully !',
          'data'=> $school->load(['locations','tuition_fees']) ],
