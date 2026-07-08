@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Resources\CompareResource;
+use App\Http\Resources\DetailsResource;
 use App\Http\Resources\SchoolResource;
 use App\Models\School;
 use App\Models\Location;
 use App\Models\SchoolType;
 use App\Models\TuitionFees;
 use Illuminate\Http\Request;
-use App\Http\Resources\SchoolResource;
 class SchoolController extends Controller
 {
     /**
@@ -75,6 +76,7 @@ class SchoolController extends Controller
     /**
      * Display the specified resource.
      */
+    // return a single school with all related data
     public function show(string $id)
     {
         $school=school::with(['schoolType',
@@ -83,7 +85,7 @@ class SchoolController extends Controller
         'reviews.user'])
         ->withAvg('reviews','rating')
         ->findOrFail($id);
-        return new SchoolResource($school);
+        return new DetailsResource($school);
     }
 
     /**
@@ -205,13 +207,34 @@ class SchoolController extends Controller
             ],
         ]);
     }
+    // compare two schools based on thier general information
+    public function compare(Request $request){
+        $request->validate([
+            'school1_id'=>'required|exists:schools,id',
+            'school2_id'=>'required|exists:schools,id'
 
+        ]);
+        $school1=School::with([
+            'schoolType',
+            'locations',
+            'tuition_fees',
+            'reviews',
+        ])
+        ->withAvg('reviews','rating')
+        ->findOrFail($request->school1_id);
+        $school2=School::with([
+            'schoolType',
+            'locations',
+            'tuition_fees',
+            'reviews',
+        ])
+        ->withAvg('reviews','rating')
+        ->findOrFail($request->school2_id);
+        return response()->json([
+            'school1'=>new CompareResource($school1),
+            'school2'=>new CompareResource($school2),
+        ],200);
 
-
-
-
-
-
-
+    }
 
 }
