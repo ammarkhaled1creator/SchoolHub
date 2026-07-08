@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\UserController;
 
 
 Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
@@ -42,6 +43,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/schools', [SchoolController::class, 'store']);
         Route::put('/schools/{id}', [SchoolController::class, 'update']);
         Route::delete('/schools/{id}', [SchoolController::class, 'destroy']);
+        Route::get('/users',[UserController::class,'getallusers']);
     });
 });
 
