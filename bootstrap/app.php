@@ -14,12 +14,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['admin'=> IsAdmin::class]);
-        //
+        $middleware->alias([
+            'admin' => IsAdmin::class
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-         $exceptions->render(function (Throwable $e, Request $request) {
-            $status = $e->getCode() ?: 500;
-            return response()->json(['message' => $e->getMessage()], $status);
+        $exceptions->render(function (Throwable $e, Request $request) {
+
+            $status = (int) $e->getCode();
+
+            if ($status < 100 || $status > 599) {
+                $status = 500;
+            }
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], $status);
+
         });
-    })->create();
+    })
+    ->create();
