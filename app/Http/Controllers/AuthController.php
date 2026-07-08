@@ -13,15 +13,19 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
-        {
-            $credentials = $request->only('email', 'password');
+    public function login(Request $request){
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+             $credentials = $request->only('email', 'password');
                 $token = auth('api')->attempt($credentials);
             if(!$token) {
                 return response()->json(['message'=>"Invalid email or password"], 401);
             }
             return response()->json([
-                'message'=>"user logged in",
+                'message'=>"Logged in successfully",
                 'token'=>$token
             ]);
         }
@@ -39,7 +43,7 @@ class AuthController extends Controller
     public function logout()
         {
             auth('api')->logout();
-            return response()->json(['message'=> 'user logged out']);
+            return response()->json(['message'=> 'Logged out successfully']);
 
         }
     public function refresh()
@@ -80,60 +84,6 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'expires_in' => $expiry
         ], 201);
-    }
-
-    public function login(Request $request){
-        $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        $credentials = $request->only('email', 'password');
-        $token = JWTAuth::attempt($credentials);
-        if(!$token){
-            return response()->json([
-                'message' => 'Invalid email or password',
-            ], 401);
-        }
-        $expiry = JWTAuth::factory()->getTTL() * 60;
-
-        return response()->json([
-            'message' => 'Login successful.',
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => $expiry
-        ]); 
-    }
-
-    public function logout(){
-        JWTAuth::invalidate(JWTAuth::getToken());
-
-        return response()->json([
-            'message' => 'Logged out successfully.'
-        ]);
-    }
-
-    public function me(){
-        $user = JWTAuth::user();
-        
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->phone,
-            'role' => $user->role ? $user->role->name : 'User'
-        ]);
-    }
-
-    public function refresh(){
-        $token = JWTAuth::parseToken()->refresh();
-        $expiry = JWTAuth::factory()->getTTL() * 60;
-        
-        return response()->json([
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => $expiry
-        ]);
     }
 
     /**
