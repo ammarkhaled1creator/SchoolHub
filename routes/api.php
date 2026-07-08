@@ -37,18 +37,7 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/schools/{id}', [SchoolController::class, 'update']);
         Route::delete('/schools/{id}', [SchoolController::class, 'destroy']);
 
-        // School Types
-        Route::post('/school-types', [SchoolTypeController::class, 'store']);
-        Route::put('/school-types/{schoolType}', [SchoolTypeController::class, 'update']);
-        Route::delete('/school-types/{schoolType}', [SchoolTypeController::class, 'destroy']);
-    });
-});
 
-Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/forgot-password', [AuthController::class, 'forgetPassword']);
-    Route::post('/reset-password/{token}/{email}', [AuthController::class, 'resetPassword']);
-});
 
 //school type(get ,patch , post , delete)
 
