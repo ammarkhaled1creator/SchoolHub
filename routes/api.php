@@ -67,6 +67,10 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 
+    // User
+    Route::put('/profile', [UserController::class, 'updateProfile']);
+    Route::put('/profile/password', [UserController::class, 'changePassword']);
+
     /*
     |--------------------------------------------------------------------------
     | Admin Routes
