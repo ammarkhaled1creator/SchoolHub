@@ -5,10 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ReviewController;
 
-// Route::get('/schools/{school}/reviews', [ReviewController::class, 'index']);
-// Route::get('/reviews/{review}', [ReviewController::class, 'show']);
+
 Route::get('/users/{user}/reviews', [ReviewController::class, 'userReviews']);
-Route::get('/schools/{id}',[SchoolController::class,'show']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->group(function () {
@@ -23,6 +21,9 @@ Route::get('/reviews/{review}', [ReviewController::class, 'show']);
 Route::get('/schools/filter', [SchoolController::class, 'filter']);
 Route::get('/school-types', [SchoolTypeController::class, 'index']);
 Route::get('/school-types/{schoolType}', [SchoolTypeController::class, 'show']);
+Route::get('/schools/compare',[SchoolController::class,'compare']);
+Route::get('/schools/{id}',[SchoolController::class,'show']);
+
 
 Route::middleware('auth:api')->group(function () {
     // Reviews

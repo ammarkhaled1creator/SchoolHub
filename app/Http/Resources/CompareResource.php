@@ -22,7 +22,6 @@ class CompareResource extends JsonResource
             'image'=>$this->image,
             'locations'=>LocationResource::collection($this->whenLoaded('locations')),
             'tuition_fees'=>TuitionFeesResource::collection($this->whenLoaded('tuition_fees')),
-            'reviews'=>ReviewResource::collection($this->whenLoaded('reviews')),
 
 
         ];

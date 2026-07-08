@@ -36,7 +36,5 @@ class School extends Model
     {
         return $this->hasMany(Review::class);
     }
-    public function schoolType(){
-        return $this->belongsTo(SchoolType::class);
-    }
+
 }

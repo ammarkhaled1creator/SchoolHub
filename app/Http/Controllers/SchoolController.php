@@ -210,29 +210,27 @@ class SchoolController extends Controller
     // compare two schools based on thier general information
     public function compare(Request $request){
         $request->validate([
-            'school1_id'=>'required|exists:schools,id',
-            'school2_id'=>'required|exists:schools,id'
+            'first_school_id'=>'required|exists:schools,id',
+            'second_school_id'=>'required|exists:schools,id|different:first_school_id'
 
         ]);
-        $school1=School::with([
+        $first_school=School::with([
             'schoolType',
             'locations',
             'tuition_fees',
-            'reviews',
         ])
         ->withAvg('reviews','rating')
-        ->findOrFail($request->school1_id);
-        $school2=School::with([
+        ->findOrFail($request->first_school_id);
+        $second_school=School::with([
             'schoolType',
             'locations',
             'tuition_fees',
-            'reviews',
         ])
         ->withAvg('reviews','rating')
-        ->findOrFail($request->school2_id);
+        ->findOrFail($request->second_school_id);
         return response()->json([
-            'school1'=>new CompareResource($school1),
-            'school2'=>new CompareResource($school2),
+            'first_school'=>new CompareResource($first_school),
+            'second_school'=>new CompareResource($second_school),
         ],200);
 
     }
