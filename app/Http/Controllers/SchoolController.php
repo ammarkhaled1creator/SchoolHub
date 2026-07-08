@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Resources\CompareResource;
+use App\Http\Resources\DetailsResource;
+use App\Http\Resources\SchoolResource;
 use App\Models\School;
 use App\Models\Location;
 use App\Models\SchoolType;
 use App\Models\TuitionFees;
 use Illuminate\Http\Request;
-use App\Http\Resources\SchoolResource;
 class SchoolController extends Controller
 {
     /**
@@ -28,6 +30,7 @@ class SchoolController extends Controller
     'description'=>'required|string',
     'phone'=>'required|string',
     'website'=>'required|url',
+    'school_type_id'=>'required|exists:school_types,id',
     'image'=>'image|mimes:jpeg,png',
 
     //Locations:
@@ -43,12 +46,18 @@ class SchoolController extends Controller
     'tuition_fees.*.academic_year'=>'required|string',
     ]);
 
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $valid['image'] = $imagePath; 
+    }
+
     //confirm Creation:
     $school= School::create([
     'name'=>$valid['name'],
     'description'=>$valid['description'],
     'phone'=>$valid['phone'],
     'website'=>$valid['website'],
+    'school_type_id'=>$valid['school_type_id'],
     'image'=>$valid['image']
     ]);
 
@@ -67,9 +76,16 @@ class SchoolController extends Controller
     /**
      * Display the specified resource.
      */
+    // return a single school with all related data
     public function show(string $id)
     {
-        //
+        $school=school::with(['schoolType',
+        'locations',
+        'tuition_fees',
+        'reviews.user'])
+        ->withAvg('reviews','rating')
+        ->findOrFail($id);
+        return new DetailsResource($school);
     }
 
     /**
@@ -84,6 +100,7 @@ class SchoolController extends Controller
     'name'=>'sometimes|string|max:225',
     'description'=>'sometimes|string',
     'phone'=>'sometimes|string',
+    'school_type_id'=>'sometimes|exists:school_type_id',
     'website'=>'sometimes|url',
     'image'=>'image|mimes:jpeg,png',
 
@@ -100,11 +117,13 @@ class SchoolController extends Controller
     'tuition_fees.*.academic_year'=>'required_with:tuition_fees|string',
     ]);
 
-
-
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('schools', 'public');
+        $valid['image'] = $imagePath;
+    }
 
     //confirm Updation for school table:
-    $school->update($request->only(['name','description','phone','website','image']));
+    $school->update($valid);
 
     //delete old data and insert all the new only if the sent request has location data:
     if($request->has('locations')){
@@ -188,13 +207,32 @@ class SchoolController extends Controller
             ],
         ]);
     }
+    // compare two schools based on thier general information
+    public function compare(Request $request){
+        $request->validate([
+            'first_school_id'=>'required|exists:schools,id',
+            'second_school_id'=>'required|exists:schools,id|different:first_school_id'
 
+        ]);
+        $first_school=School::with([
+            'schoolType',
+            'locations',
+            'tuition_fees',
+        ])
+        ->withAvg('reviews','rating')
+        ->findOrFail($request->first_school_id);
+        $second_school=School::with([
+            'schoolType',
+            'locations',
+            'tuition_fees',
+        ])
+        ->withAvg('reviews','rating')
+        ->findOrFail($request->second_school_id);
+        return response()->json([
+            'first_school'=>new CompareResource($first_school),
+            'second_school'=>new CompareResource($second_school),
+        ],200);
 
-
-
-
-
-
-
+    }
 
 }
